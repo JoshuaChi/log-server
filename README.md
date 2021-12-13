@@ -19,10 +19,10 @@ Aim to setup a restful server with high performance to accept business log activ
 | **Log**  |                                                                                |
 | Log                               |  /api/v1/log                       |
 
-#### Sign in
+#### Login
 **Path**
 ```
-/api/v1/users/sign_in
+/api/v1/login
 ```
 
 **Method**
@@ -30,38 +30,86 @@ Aim to setup a restful server with high performance to accept business log activ
 POST
 ```
 
-**Request params**
-
-| Params |  Type  | Required | Description | Default | Demo value |
-| :----: | :----: | :--: | :--: | :----: | :----: |
-| locale | String |  N  | Language | zh-CN  | zh-CN  |
-
 **Request Body**
 
 | Params |  Type  | Required | Description | Default | Demo value |
 | :-------: | :----: | :--: | :--------: | :----: | :--------: |
-| phone     | String | Y   | Mobile   | -      | 86-1234567890 |
-| sms_code  | String | Y   | SMS code | -      | 74616      |
+| Username     | String | Y   | User name   | -      | Username |
+| Password  | String | Y   | Password | -      | Password      |
+
+
+``` curl
+curl --location --request POST 'localhost:8080/api/v1/login' \
+--header 'content-type: application/json' \
+--data-raw '{"Username":"username", "Password":"password"}'
+```
+
 
 **Response body**
 
 | Params |  Type   | Description |
 | :--------------: | :-----: | :----------------: |
 |  access_token   | String  | access token |
+|  refresh_token   | String  | refresh token |
 
 **Response JSON**
 
 ```json
 // Status Code: 200
 {
-    "access_token": "c9BvyhEhPw6ppCGgw8ZY1ktTTx9sktyPFZ8k87AcCao",
-    "token_type": "Bearer",
-    "expires_in": 604800,
-    "refresh_token": "qDsfRzpjzAoksjyxiQw0nVJ0Ozz7DcCYvgew5fLCS_I",
-    "created_at": 1597904848
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjQ4ZWVjZjI4LTQxZTUtNDk3Zi1iNmU4LWI0OTk1OTlkOWY3ZiIsImF1dGhvcml6ZWQiOnRydWUsImV4cCI6MTYzOTM4ODIzNSwidXNlcl9pZCI6MX0.9DyIZgZSmQNOEnxbQhUMI2Xp7RlSzfWU-3EsCgLtTLs",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Mzk5OTIxMzUsInJlZnJlc2hfdXVpZCI6IjEzMDk3NzhkLWJlNGEtNGNlZC1iYWMyLWI4ZGJlNGIzMDYwNiIsInVzZXJfaWQiOjF9.tvqySJG1Mo6Wfr63Sii3KoUySGMq6n9AOVLZ2k8WjeM"
 }
 ```
+
+
+
+
+#### Login
+**Path**
+```
+/api/v1/log
+```
+
+**Method**
+```
+POST
+```
+
+**Request Header**
+
+| Params |  Type  | Required | Description | Default | Demo value |
+| :-------: | :----: | :--: | :--------: | :----: | :--------: |
+| Authorization     | String | Y   | Bear token   | -      | Bearer {{access_token}} |
+
+**Request Body**
+
+| Params |  Type  | Required | Description | Default | Demo value |
+| :-------: | :----: | :--: | :--------: | :----: | :--------: |
+| Uid     | String | Y   | User Id   | -      | "1E43" |
+| Action     | String | Y   | User action   | -      | "shop" |
+| Category     | String | Y   | action category  | -      | "product" |
+| Subcategory     | String | N   | action sub category  | -      | "shoes" |
+
+
+``` curl
+curl --location --request POST 'localhost:8080/api/v1/log' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Mzk5OTIxMzUsInJlZnJlc2hfdXVpZCI6IjEzMDk3NzhkLWJlNGEtNGNlZC1iYWMyLWI4ZGJlNGIzMDYwNiIsInVzZXJfaWQiOjF9.tvqySJG1Mo6Wfr63Sii3KoUySGMq6n9AOVLZ2k8WjeM' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "Uid":"1E43", 
+    "Action":"Shop", 
+    "Category": "product", 
+    "Subcategory": "test"
+}'
+```
+
+**Response JSON**
+
+```json
+// Status Code: 200
+```
+
+
 **Note**
-以下与终端用户相关的接口, 都需要带上 access_token，方式：在请求的头部增加 Authorization: Bearer access_token
-
-
+Go Version > 1.5

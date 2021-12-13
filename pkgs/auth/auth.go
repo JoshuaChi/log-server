@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/gofrs/uuid"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type TokenDetails struct {
