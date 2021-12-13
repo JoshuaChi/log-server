@@ -6,25 +6,9 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v7"
+	"github.com/joshuachi/logserver/pkgs/apis"
+	"github.com/joshuachi/logserver/pkgs/auth"
 )
-
-var client *redis.Client
-
-func init() {
-	//Initializing redis
-	dsn := os.Getenv("REDIS_DSN")
-	if len(dsn) == 0 {
-		dsn = "localhost:6379"
-	}
-	client = redis.NewClient(&redis.Options{
-		Addr: dsn, //redis port
-	})
-	_, err := client.Ping().Result()
-	if err != nil {
-		panic(err)
-	}
-}
 
 func setupRouter() *gin.Engine {
 	// Disable Console Color
@@ -39,8 +23,8 @@ func setupRouter() *gin.Engine {
 	// Use the following code if you need to write the logs to file and console at the same time.
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
 
-	r.POST("/log", TokenAuthMiddleware(), Log)
-	r.POST("/login", Login)
+	r.POST("/api/v1/log", auth.TokenAuthMiddleware(), apis.Log)
+	r.POST("/api/v1/login", apis.Login)
 
 	return r
 }
