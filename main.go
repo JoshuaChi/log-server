@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -12,42 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var db = make(map[string]string)
-
-func Logger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		t := time.Now()
-
-		// Set example variable
-		c.Set("example", "12345")
-		jsonData, err := ioutil.ReadAll(c.Request.Body)
-		if err != nil {
-			// Handle error
-		}
-		c.Set("id", jsonData)
-		// before request
-
-		c.Next()
-
-		// after request
-		latency := time.Since(t)
-		log.Print(latency)
-
-		// access the status we are sending
-		status := c.Writer.Status()
-		log.Println(status)
-	}
-}
-
 func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
-
-	r.Use(Logger())
-	// gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
-	// 	log.Printf("endpoint %v %v %v %v\n", httpMethod, absolutePath, handlerName, nuHandlers)
-	// }
 
 	// receover from panic and write 500 log, high availability
 	r.Use(gin.Recovery())
@@ -56,28 +23,6 @@ func setupRouter() *gin.Engine {
 
 	// Use the following code if you need to write the logs to file and console at the same time.
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
-
-	// LoggerWithFormatter middleware will write the logs to gin.DefaultWriter
-	// By default gin.DefaultWriter = os.Stdout
-
-	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		jsonData, _ := ioutil.ReadAll(param.Request.Body)
-
-		// err = client.Set("id", jsonData, 0).Err()
-		// your custom format
-		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s %s \"\n",
-			param.ClientIP,
-			param.TimeStamp.Format(time.RFC3339),
-			param.Method,
-			param.Path,
-			param.Request.Proto,
-			param.StatusCode,
-			param.Latency,
-			param.Request.UserAgent(),
-			param.ErrorMessage,
-			string(jsonData),
-		)
-	}))
 
 	// Authorized group (uses gin.BasicAuth() middleware)
 	// Same than:
@@ -94,16 +39,16 @@ func setupRouter() *gin.Engine {
 	/* example curl for /admin with basicauth header
 	   echo -n 'admin:Chai3pee'  | openssl base64  // YWRtaWx6Q2hhaTNwZWU=
 
-		curl -X POST \
+		curl -i -X POST \
 	  	http://localhost:8080/admin \
-	  	-H 'authorization: Basic YWRtaWx6Q2hhaTNwZWU=' \
+	  	-H 'authorization: Basic YWRtaW46Q2hhaTNwZWU=' \
 	  	-H 'content-type: application/json' \
-	  	-d '{"value":"bar"}'
+	  	-d '{"Uid":"1E43", "Action":"Shop", "Category":"product", "SubCategory":"test"}'
 	*/
 	authorized.POST("admin", func(c *gin.Context) {
-		user := c.MustGet(gin.AuthUserKey).(string)
+		// user := c.MustGet(gin.AuthUserKey).(string)
 
-		log.Println(user)
+		// log.Println(user)
 		// Parse JSON
 		var request struct {
 			Uid         string `json:"uid" binding:"required"`
@@ -114,9 +59,8 @@ func setupRouter() *gin.Engine {
 
 		if c.Bind(&request) == nil {
 
-			// jsonString, _ := json.Marshal(request)
-			// fmt.Println(gin.DefaultWriter, string(jsonString))
-
+			jsonString, _ := json.Marshal(request)
+			log(c, string(jsonString))
 			c.JSON(http.StatusOK, gin.H{})
 		}
 	})
@@ -128,4 +72,17 @@ func main() {
 	r := setupRouter()
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(":8080")
+}
+
+func log(c *gin.Context, msg string) {
+	start := time.Now()
+	path := c.Request.URL.Path
+	// raw := c.Request.URL.RawQuery
+	clientIP := c.ClientIP()
+	statusCode := c.Writer.Status()
+	bodySize := c.Writer.Size()
+
+	r := fmt.Sprintf("[%s] - [\"%s %s\" - %d - %d] - %s\n", start.Format(time.RFC3339), clientIP, path, statusCode, bodySize, msg)
+	gin.DefaultWriter.Write([]byte(r))
+
 }
