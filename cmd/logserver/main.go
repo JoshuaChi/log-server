@@ -36,7 +36,7 @@ func setupRouter() *gin.Engine {
 	// receover from panic and write 500 log, high availability
 	r.Use(gin.Recovery())
 
-	f, _ := os.Create("logs/" + os.Getenv("LOG_FILENAME"))
+	f, _ := os.Create("../../logs/" + os.Getenv("LOG_FILENAME"))
 
 	// Use the following code if you need to write the logs to file and console at the same time.
 	gin.DefaultWriter = io.MultiWriter(f, os.Stdout)
