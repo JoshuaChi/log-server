@@ -3,10 +3,13 @@ package apis
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/joshuachi/logserver/pkgs/auth"
 )
 
@@ -16,10 +19,19 @@ type User struct {
 	Password string `json:"password"`
 }
 
-var user = User{
-	ID:       1,
-	Username: "username",
-	Password: "password",
+var user User
+
+func init() {
+	err := godotenv.Load() // The Original basic .env which is shared cross ENVs
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	user = User{
+		ID:       1,
+		Username: os.Getenv("DEVELOPER_NAME"),
+		Password: os.Getenv("DEVELOPER_PASSWORD"),
+	}
 }
 
 func Login(c *gin.Context) {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/joho/godotenv"
 )
 
 type TokenDetails struct {
@@ -31,6 +33,11 @@ type AccessDetails struct {
 var client *redis.Client
 
 func init() {
+	err := godotenv.Load() // The Original basic .env which is shared cross ENVs
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	//Initializing redis
 	dsn := os.Getenv("REDIS_DSN")
 	if len(dsn) == 0 {
@@ -39,7 +46,7 @@ func init() {
 	client = redis.NewClient(&redis.Options{
 		Addr: dsn, //redis port
 	})
-	_, err := client.Ping().Result()
+	_, err = client.Ping().Result()
 	if err != nil {
 		panic(err)
 	}
@@ -63,17 +70,19 @@ func CreateAuth(userid uint64, td *TokenDetails) error {
 
 func CreateToken(userid uint64) (*TokenDetails, error) {
 	td := &TokenDetails{}
-	td.AtExpires = time.Now().Add(time.Minute * 15).Unix()
+
+	ate, _ := strconv.Atoi(os.Getenv("OAUTH_ACCESS_TOKEN_LIFETIME_MINUTE"))
+	td.AtExpires = time.Now().Add(time.Minute * time.Duration(ate)).Unix()
 	uid, _ := uuid.NewV4()
 	td.AccessUuid = uid.String()
 
-	td.RtExpires = time.Now().Add(time.Hour * 24 * 7).Unix()
+	rte, _ := strconv.Atoi(os.Getenv("OAUTH_REFRESH_TOKEN_LIFETIME_MINUTE"))
+	td.RtExpires = time.Now().Add(time.Minute * time.Duration(rte)).Unix()
 	uid, _ = uuid.NewV4()
 	td.RefreshUuid = uid.String()
 
 	var err error
 	//Creating Access Token
-	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd") //this should be in an env file
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["access_uuid"] = td.AccessUuid
@@ -85,7 +94,6 @@ func CreateToken(userid uint64) (*TokenDetails, error) {
 		return nil, err
 	}
 	//Creating Refresh Token
-	os.Setenv("REFRESH_SECRET", "mcmvmkmsdnfsdmfdsjf") //this should be in an env file
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUuid
 	rtClaims["user_id"] = userid

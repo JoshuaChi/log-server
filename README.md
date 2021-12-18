@@ -113,3 +113,8 @@ curl --location --request POST 'localhost:8080/api/v1/log' \
 
 **Note**
 Go Version > 1.5
+
+
+
+## Configure
+You could config variable inside .env file. 
